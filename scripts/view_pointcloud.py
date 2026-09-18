@@ -31,6 +31,10 @@ def main():
     ap.add_argument("--save", default=None, help="save figure to PNG instead of showing")
     ap.add_argument("--color", default="z", choices=["z", "intensity"],
                     help="color points by height or reflectivity")
+    ap.add_argument("--top", action="store_true",
+                    help="2D top-down (x-y) view instead of 3D")
+    ap.add_argument("--elev", type=float, default=25.0, help="3D camera elevation")
+    ap.add_argument("--azim", type=float, default=-60.0, help="3D camera azimuth")
     args = ap.parse_args()
 
     pts = load_pcd(args.pcd)
@@ -52,25 +56,34 @@ def main():
         matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    fig = plt.figure(figsize=(10, 9))
-    ax = fig.add_subplot(111, projection="3d")
     c = pts[:, 2] if args.color == "z" else pts[:, 3]
-    sc = ax.scatter(pts[:, 0], pts[:, 1], pts[:, 2], c=c, s=0.3,
-                    cmap="viridis" if args.color == "z" else "gray",
-                    linewidths=0)
-    fig.colorbar(sc, ax=ax, label="z [m]" if args.color == "z" else "intensity",
-                 shrink=0.6)
-    ax.set_xlabel("x [m]")
-    ax.set_ylabel("y [m]")
-    ax.set_zlabel("z [m]")
-    ax.set_title(args.pcd)
+    cmap = "viridis" if args.color == "z" else "gray"
+    clabel = "z [m]" if args.color == "z" else "intensity"
 
-    # equal-ish aspect: use the largest xy range
-    xr = pts[:, 0].max() - pts[:, 0].min()
-    yr = pts[:, 1].max() - pts[:, 1].min()
-    r = max(xr, yr, 1e-3)
-    ax.set_xlim(pts[:, 0].mean() - r / 2, pts[:, 0].mean() + r / 2)
-    ax.set_ylim(pts[:, 1].mean() - r / 2, pts[:, 1].mean() + r / 2)
+    fig = plt.figure(figsize=(10, 9))
+    if args.top:
+        ax = fig.add_subplot(111)
+        sc = ax.scatter(pts[:, 0], pts[:, 1], c=c, s=0.5, cmap=cmap,
+                        linewidths=0)
+        ax.set_xlabel("x [m]")
+        ax.set_ylabel("y [m]")
+        ax.set_aspect("equal")
+        ax.grid(True, alpha=0.3)
+    else:
+        ax = fig.add_subplot(111, projection="3d")
+        sc = ax.scatter(pts[:, 0], pts[:, 1], pts[:, 2], c=c, s=0.3,
+                        cmap=cmap, linewidths=0)
+        ax.set_xlabel("x [m]")
+        ax.set_ylabel("y [m]")
+        ax.set_zlabel("z [m]")
+        ax.view_init(elev=args.elev, azim=args.azim)
+        # true proportional axes so z is not squashed
+        xr = pts[:, 0].ptp()
+        yr = pts[:, 1].ptp()
+        zr = pts[:, 2].ptp()
+        ax.set_box_aspect((xr, yr, max(zr, 1e-3)))
+    fig.colorbar(sc, ax=ax, label=clabel, shrink=0.6)
+    ax.set_title(args.pcd)
 
     if args.save:
         fig.savefig(args.save, dpi=150, bbox_inches="tight")
