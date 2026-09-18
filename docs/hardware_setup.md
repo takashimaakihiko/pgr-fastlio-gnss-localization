@@ -5,9 +5,9 @@
 - Ubuntu 22.04.5 LTS, x86_64, 4コア, 30GB RAM
 - ROS 2 Humble インストール済み (本プロジェクトでは未使用)
 
-## MID360 (Livox) — Ethernet
+## MID360s (Livox) — Ethernet
 
-MID360 デフォルト: `192.168.1.1xx` (xx = シリアル下2桁)、DHCP server非搭載。
+MID360s デフォルト: `192.168.1.1xx` (xx = シリアル下2桁)、DHCP server非搭載。
 
 1. PC のEthernetポートを固定IP `192.168.1.5/24` に設定
    ```bash

@@ -66,6 +66,14 @@ private:
     FrameCallback frame_cb_;
     ImuCallback imu_cb_;
     bool initialized_ = false;
+
+    // diagnostics
+    uint64_t diag_point_packets_ = 0;
+    uint64_t diag_points_ = 0;
+    uint64_t diag_imu_packets_ = 0;
+    uint64_t diag_frames_ = 0;
+    std::chrono::steady_clock::time_point diag_last_log_{};
+    void diag_tick(const LivoxLidarEthernetPacket *data, bool is_imu);
 };
 
 #endif

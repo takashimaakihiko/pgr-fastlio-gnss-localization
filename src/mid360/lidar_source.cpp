@@ -78,6 +78,25 @@ uint64_t Mid360Source::packet_timestamp_ns(const LivoxLidarEthernetPacket *data)
     return stamp;
 }
 
+void Mid360Source::diag_tick(const LivoxLidarEthernetPacket *data, bool is_imu)
+{
+    const auto now = std::chrono::steady_clock::now();
+    if (now - diag_last_log_ < std::chrono::seconds(2))
+    {
+        return;
+    }
+    diag_last_log_ = now;
+    std::cerr << "[mid360] pkts point=" << diag_point_packets_
+              << " (pts=" << diag_points_ << ")"
+              << " imu=" << diag_imu_packets_
+              << " frames=" << diag_frames_
+              << " | last pkt type=" << int(data->data_type)
+              << " dot_num=" << data->dot_num
+              << " time_type=" << int(data->time_type)
+              << " t_int=" << data->time_interval
+              << (is_imu ? " [imu]" : " [pts]") << std::endl;
+}
+
 void Mid360Source::on_point_packet(uint8_t dev_type,
                                    const LivoxLidarEthernetPacket *data)
 {
@@ -85,6 +104,9 @@ void Mid360Source::on_point_packet(uint8_t dev_type,
     {
         return;
     }
+    diag_point_packets_++;
+    diag_points_ += data->dot_num;
+    diag_tick(data, false);
 
     const uint64_t pkt_ts_ns = packet_timestamp_ns(data);
     // official driver: point_interval = time_interval * 100 / dot_num (ns)
@@ -179,6 +201,7 @@ void Mid360Source::emit_frame()
         msg.points.push_back(cp);
     }
     buf_.clear();
+    diag_frames_++;
 
     if (frame_cb_)
     {
@@ -192,6 +215,8 @@ void Mid360Source::on_imu_packet(const LivoxLidarEthernetPacket *data)
     {
         return;
     }
+    diag_imu_packets_++;
+    diag_tick(data, true);
 
     const uint64_t pkt_ts_ns = packet_timestamp_ns(data);
     const uint64_t interval_ns =
