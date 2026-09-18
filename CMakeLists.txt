@@ -64,3 +64,19 @@ target_link_libraries(lio_node
     ${PYTHON_LIBRARIES}
     pthread
 )
+
+# standalone point-cloud dump tool (no FAST-LIO)
+add_executable(pc_dump
+    src/pc_dump.cpp
+    src/mid360/lidar_source.cpp
+)
+
+target_include_directories(pc_dump PRIVATE
+    ${FASTLIO_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/mid360
+)
+
+target_link_libraries(pc_dump
+    livox_lidar_sdk_static
+    pthread
+)
