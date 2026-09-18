@@ -1,0 +1,5 @@
+build/
+data/trajectory/*
+!data/trajectory/.gitkeep
+*.pcd
+__pycache__/
